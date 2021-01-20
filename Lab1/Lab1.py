@@ -13,6 +13,16 @@ class Person:
         self.happiness = happiness
         self.state = state
 
+nameId = 1
+maxHunger = 10
+maxFood = 10
+maxThirst = 10
+maxWater = 10
+maxEnergy = 10
+startMoney = 0
+maxHappy = 10
+
+defaultPerson = Person(nameId, maxHunger, maxFood, maxThirst, maxWater, maxEnergy, startMoney, maxHappy, 0)
 
 class State:
     def Working(person):
@@ -42,7 +52,7 @@ class State:
         
     def Eating(person):
         person.hunger += 5
-        person.food - = 5
+        person.food -= 5
         person.energy += 5
         person.happiness += 5
         person.state = 4
@@ -61,17 +71,11 @@ class State:
         person.happiness += 5
         person.state = 6
 
-nameId = 1
-maxHunger = 10
-maxThirst = 10
-maxEnergy = 10
-startMoney = 0
-maxHappy = 10
-
-defaultPerson = Person(nameId, maxHunger, maxThirst, maxEnergy, startMoney, maxHappy, 0)
 
 bob = defaultPerson
 
+def live(person):
+    if
 print(bob.money)
 bob.money += 10
 print(bob.money)

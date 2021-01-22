@@ -1,7 +1,7 @@
 import time
+import _thread
 
 class Person:
-
     def __init__(self, nameId, hunger, food, thirst, water, energy, money, happiness, state):
         self.nameId = nameId
         self.hunger =  hunger
@@ -22,13 +22,11 @@ maxEnergy = 10
 startMoney = 0
 maxHappy = 10
 
-defaultPerson = Person(nameId, maxHunger, maxFood, maxThirst, maxWater, maxEnergy, startMoney, maxHappy, 0)
-
 class State:
     def Working(person):
         person.hunger -= 5
         person.thirst -= 5
-        person.energy -=5
+        person.energy -= 5
         person.money +=5
         person.happiness -=5
         person.state = 1
@@ -72,15 +70,39 @@ class State:
         person.state = 6
 
 
-bob = defaultPerson
+        
+x = int(input("Please enter how many people exist: "))
 
-def live(person):
-    if
-print(bob.money)
-bob.money += 10
-print(bob.money)
-bob.money += 10
-print(bob.money)
+personList = []
+for i in range(x):
+    personList.append(Person(i, maxHunger, maxFood, maxThirst, maxWater, maxEnergy, startMoney, maxHappy, 0))
+    personList[i].nameId = i
 
-print(divmod(8.0,3))
+for i in range(x):
+    print(personList[i].nameId)
+
+print(personList[0].money)
+personList[0].money += 10
+print(personList[0].money)
+personList[0].money += 10
+print(personList[0].money)
+
+t0 = time.time()
+timeMultiplier = 60
+
+def timer():
+    while True:
+        date = (time.time() - t0) * timeMultiplier
+        hour = divmod(date, 3600.0)
+        day = divmod(hour[0], 24)
+        year = divmod(day[0], 365)
+        print(hour)
+    
+_thread.start_new_thread(timer())
+
+while True:
+    timeMultiplier = input()
+
+    
+    
 

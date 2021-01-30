@@ -16,4 +16,6 @@ class Person:
         self.plans = 0
         
     def Update(self):
+        if(self.happiness <= 20 && self.state != socializing()):
+            #send message
         self.state.execute(self)

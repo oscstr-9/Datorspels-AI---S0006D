@@ -13,11 +13,13 @@ wall = (0, 0, 0)
 path = (255, 255, 255)
 start = (0, 255, 0)
 finish = (255, 0, 0)
-algorithm = "bfs"
+algorithm = "a*"
 
 
 def main():
-    f = open("Map3.txt", "r")
+    f = open("Map1.txt", "r")
+
+
     
     # parse map file
     mapLines = f.readlines()
@@ -77,19 +79,19 @@ def drawMap(mapList):
             if mapList[x][y] == "X":
                 pygame.draw.rect(screen, wall, rect, 1)
                 screen.fill(wall, rect, 0)
-                nodes.append(("X", x, y))
+                nodes.append((x, y, "X"))
             elif mapList[x][y] == "0":
                 pygame.draw.rect(screen, path, rect, 1)
                 screen.fill(path, rect, 0)
-                nodes.append(("0", x, y))
+                nodes.append((x, y, "0"))
             elif mapList[x][y] == "S":
                 pygame.draw.rect(screen, start, rect, 1)
                 screen.fill(start, rect, 0)
-                nodes.append(("S", x, y))
+                nodes.append((x, y, "S"))
             elif mapList[x][y] == "G":
                 pygame.draw.rect(screen, finish, rect, 1)
                 screen.fill(finish, rect, 0)
-                nodes.append(("G", x, y))
+                nodes.append((x, y, "G"))
             else:
                 print("Map not formatted correctly!")
                 pygame.draw.rect(screen, (255, 0, 255), rect, 1)
@@ -97,7 +99,9 @@ def drawMap(mapList):
 
     drawPath(Pathfinder.findPath(algorithm, nodes, mapList))
 
+# Takes list of (x, y) tuples to print path
 def drawPath(path):
+    # Scales the path to fit the map
     scaledPath = []
     for tiles in path:
         scaledPath.append(((tiles[0] * gridSize) + gridSize//2, (tiles[1] * gridSize) + gridSize//2))

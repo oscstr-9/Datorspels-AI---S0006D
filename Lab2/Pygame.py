@@ -1,5 +1,4 @@
 import pygame
-import Pathfinder
 from pygame.locals import (
     K_ESCAPE,
     KEYDOWN,
@@ -62,7 +61,6 @@ def drawPath(path):
 
 def update():
     pygame.display.flip()
-
     # Has the ESCAPE key been pressed?
     for event in pygame.event.get():
         if event.type == KEYDOWN:

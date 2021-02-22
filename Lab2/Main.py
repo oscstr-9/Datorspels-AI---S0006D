@@ -4,7 +4,7 @@ import Pathfinder
 def main():
     algorithm = "custom"
     running = True
-    f = open("maps/Map3.txt", "r")
+    f = open("maps/Map2.txt", "r")
 
     # parse map file
     mapLines = f.readlines()
@@ -23,12 +23,10 @@ def main():
             i += 1
 
     Pygame.init(map)
-
     Pygame.drawPath(Pathfinder.findPath(algorithm, map))
 
     while running is True:
         running = Pygame.update()
-
 
 
 main()

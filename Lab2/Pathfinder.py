@@ -2,9 +2,12 @@ import copy
 import time
 import pygame
 import Pygame
+from threading import Thread
+from multiprocessing.pool import ThreadPool
+
 
 def findPath(algorithm, mapList):
-    r = ((1, 1), (1, 0), (0, 1), (-1, 1), (1, -1), (0, -1), (-1, 0), (-1, -1))
+    r = ((1, 1), (1, 0), (0, 1), (-1, 1), (1, -1),(-1, 0), (0, -1), (-1, -1))
     walls = []
     # separate coords from type
     for x in range(len(mapList)):
@@ -204,17 +207,14 @@ def breadthFirstSearch(currentPos,finish,mapList,r):
         i += 1
     return path
 
+
 def custom(start, finish, mapList, r):
     startFound = False
-    runningStart = True
-    runningfinish = True
-    i = 0
+
     centerX = len(mapList)//2
     centerY = len(mapList[0])//2
 
-    startPath = []
-    finishPath = []
-
+    # Creates a graph map for the algorithm to traverse through
     graphMap = copy.deepcopy(mapList)
     for x in range(len(graphMap)):
         for y in range(len(graphMap[0])):
@@ -223,6 +223,7 @@ def custom(start, finish, mapList, r):
             else:
                 graphMap[x][y] = True
 
+    # Checks if center of map is a wall
     if mapList[centerX][centerY] == "X":
 
         searchCenter = [centerX, centerY, -1]
@@ -234,12 +235,16 @@ def custom(start, finish, mapList, r):
                     graph[x][y] = 0
                 else:
                     graph[x][y] = 1
+
         queue = []
+        i = 0
 
         queue.append((searchCenter[0], searchCenter[1], -1))
         graph[searchCenter[0]][searchCenter[1]] = False
+
+        # Finds the first traversable place closest to the center of the map
         while startFound is False:
-            searchStart = queue[i]
+            searchCenter = queue[i]
             for neighbour in r:
                 if graph[neighbour[0] + searchCenter[0]][neighbour[1] + searchCenter[1]] == 0:
                     graph[neighbour[0] + searchCenter[0]][neighbour[1] + searchCenter[1]] = 2
@@ -248,25 +253,36 @@ def custom(start, finish, mapList, r):
                 elif graph[neighbour[0] + searchCenter[0]][neighbour[1] + searchCenter[1]] == 1:
                     centerX = neighbour[0] + searchCenter[0]
                     centerY = neighbour[1] + searchCenter[1]
-                    searchCenter[0] = centerX
-                    searchCenter[1] = centerY
                     startFound = True
-            i+= 1
+            i += 1
 
-    currentPos = [centerX, centerY]
-    startPath.append(currentPos)
-    revR = r[::-1]
-    while runningStart:
-        print(currentPos)
-        currentPos = startPath[len(startPath)-1]
-        print(currentPos)
+    # Pool of working threads outside of main thread
+    pool = ThreadPool(processes=1)
+    async_result = pool.apply_async(customAlg, (graphMap, (centerX, centerY), finish, r))  # Run algorithm on seperate thread
+
+    # Run algorithm on main thread
+    csPath = customAlg(graphMap, (centerX, centerY), start, r[::-1])
+
+    # Get results from thread
+    cfPath = async_result.get()
+
+    return cfPath[::-1] + csPath
 
 
-        if currentPos[0] == start[0] and currentPos[1] == start[1]:
-            runningStart = False
+def customAlg(graphMap,startPos, goal, r):
+    running = True
+    path = []
+
+    currentPos = startPos
+    path.append(currentPos)
+    while running:
+        currentPos = path[len(path)-1]
+
+        if currentPos[0] == goal[0] and currentPos[1] == goal[1]:
+            running = False
             break
-        i = 0
-        for next in revR:
+
+        for next in r:
             neighbour = (currentPos[0] + next[0], currentPos[1] + next[1])
             if next == (1, 1):
                 if graphMap[currentPos[0]][currentPos[1] + 1] == False or graphMap[currentPos[0] + 1][currentPos[1]] == False:
@@ -282,75 +298,16 @@ def custom(start, finish, mapList, r):
                     continue
 
             if graphMap[neighbour[0]][neighbour[1]]:
-                startPath.append(neighbour)
+                path.append(neighbour)
+                graphMap[currentPos[0]][currentPos[1]] = False
                 break
-            i += 1
-        if neighbour == startPath[len(startPath)-1] and i == 8:
-            startPath.remove(neighbour)
 
-            Pygame.drawMap(mapList)
-            for node in startPath:
-                pygame.draw.rect(Pygame.screen, Pygame.agent,
-                                 pygame.Rect(node[0] * Pygame.gridSize + Pygame.gridSize // 2,
-                                             node[1] * Pygame.gridSize + Pygame.gridSize // 2, 5, 5))
-                pygame.draw.line(Pygame.screen, (100, 255, 255), (
-                    node[0] * Pygame.gridSize + Pygame.gridSize // 2, node[1] * Pygame.gridSize + Pygame.gridSize // 2),
-                                 (startPath[len(startPath)-2][0] * Pygame.gridSize + Pygame.gridSize // 2,
-                                  startPath[len(startPath)-2][1] * Pygame.gridSize + Pygame.gridSize // 2), 5)
+        if currentPos == path[len(path)-1]:
+            path.remove(currentPos)
+
+        for node in path:
+            pygame.draw.rect(Pygame.screen, Pygame.agent, pygame.Rect(node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2,5,5))
             Pygame.update()
-            time.sleep(0.05)
+        time.sleep(0.1)
 
-
-    for x in range(len(graphMap)):
-        for y in range(len(graphMap[0])):
-            if mapList[x][y] == "X":
-                graphMap[x][y] = False
-            else:
-                graphMap[x][y] = True
-    currentPos = [centerX, centerY, -1]
-    k = 0
-    while runningFinish:
-        finishPath.append(currentPos)
-        currentPos = startPath[len(startPath) - 1]
-
-        if currentPos[0] == finish[0] and currentPos[1] == finish[1]:
-            runningFinish = False
-            break
-
-            i = 0
-            for next in r:
-                neighbour = (currentPos[0] + next[0], currentPos[1] + next[1])
-                if next == (1, 1):
-                    if graphMap[currentPos[0]][currentPos[1] + 1] == False or graphMap[currentPos[0] + 1][currentPos[1]] == False:
-                        continue
-                elif next == (-1, 1):
-                    if graphMap[currentPos[0]][currentPos[1] + 1] == False or graphMap[currentPos[0] + -1][currentPos[1]] == False:
-                        continue
-                elif next == (1, -1):
-                    if graphMap[currentPos[0]][currentPos[1] + -1] == False or graphMap[currentPos[0] + 1][currentPos[1]] == False:
-                        continue
-                elif next == (-1, -1):
-                    if graphMap[currentPos[0]][currentPos[1] + -1] == False or graphMap[currentPos[0] + -1][currentPos[1]] == False:
-                        continue
-
-                if graphMap[neighbour[0]][neighbour[1]]:
-                    finishPath.append(neighbour)
-                    break
-                i += 1
-            if neighbour == startPath[len(startPath - 1)]:
-                finishPath.remove(neighbour)
-
-            Pygame.drawMap(mapList)
-            for node in finishPath:
-                pygame.draw.rect(Pygame.screen, Pygame.agent,
-                                 pygame.Rect(node[0] * Pygame.gridSize + Pygame.gridSize // 2,
-                                             node[1] * Pygame.gridSize + Pygame.gridSize // 2, 5, 5))
-                pygame.draw.line(Pygame.screen, (100, 255, 255), (
-                    node[0] * Pygame.gridSize + Pygame.gridSize // 2, node[1] * Pygame.gridSize + Pygame.gridSize // 2),
-                                 (finishPath[len(startPath)-2][0] * Pygame.gridSize + Pygame.gridSize // 2,
-                                  finishPath[len(startPath)-2][1] * Pygame.gridSize + Pygame.gridSize // 2), 5)
-
-            Pygame.update()
-            time.sleep(0.05)
-
-    return startPath + finish
+    return path

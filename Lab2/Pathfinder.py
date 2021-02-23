@@ -2,7 +2,6 @@ import copy
 import time
 import pygame
 import Pygame
-from threading import Thread
 from multiprocessing.pool import ThreadPool
 
 
@@ -20,13 +19,28 @@ def findPath(algorithm, mapList):
                 finish = (x, y)
 
     if algorithm == "astar" or algorithm == "a*":
-        return aStar(start, finish, mapList, r)
+        startTime = time.time()
+        path = aStar(start, finish, mapList, r)
+        stopTime = time.time()
+        return (path, stopTime - startTime)
+
     elif algorithm == "depthfirstsearch" or algorithm == "dfs":
-        return depthFirstSearch(start, finish, walls, r)
+        startTime = time.time()
+        path = depthFirstSearch(start, finish, walls, r)
+        stopTime = time.time()
+        return (path, stopTime - startTime)
+
     elif algorithm == "breadthfirstsearch" or algorithm == "bfs":
-        return breadthFirstSearch(start, finish, mapList, r)
+        startTime = time.time()
+        path = breadthFirstSearch(start, finish, mapList, r)
+        stopTime = time.time()
+        return (path, stopTime - startTime)
+
     elif algorithm == "custom":
-        return custom(start, finish, mapList, r)
+        startTime = time.time()
+        path = custom(start, finish, mapList, r)
+        stopTime = time.time()
+        return (path, stopTime - startTime)
 
 
 def heuristic(neighbour, finish, g, r):
@@ -73,6 +87,7 @@ def aStar(startPos, finishPos, mapList, r):
     while len(openList) > 0:
         #sort list
         openList.sort(key=lambda x: x[5])
+
         #pop lowest cost
         currentPos = openList.pop(0)
         nodes.append(currentPos)
@@ -112,16 +127,16 @@ def aStar(startPos, finishPos, mapList, r):
             addToOpen(openList, closedList, neighbour)
         i += 1
 
-        Pygame.drawMap(mapList)
-        for node in openList:
-            pygame.draw.rect(Pygame.screen, Pygame.agent, pygame.Rect(node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2,5,5))
-            pygame.draw.line(Pygame.screen, (100, 255, 255), (node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2), (nodes[node[2]][0]*Pygame.gridSize+Pygame.gridSize//2,nodes[node[2]][1]*Pygame.gridSize+Pygame.gridSize//2),5)
-        for node in closedList:
-            pygame.draw.rect(Pygame.screen, (100, 0, 75), pygame.Rect(node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2,5,5))
-            pygame.draw.line(Pygame.screen, (100, 255, 255), (node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2), (nodes[node[2]][0]*Pygame.gridSize+Pygame.gridSize//2,nodes[node[2]][1]*Pygame.gridSize+Pygame.gridSize//2),5)
-
-        Pygame.update()
-        time.sleep(0.05)
+        # Pygame.drawMap(mapList)
+        # for node in openList:
+        #     pygame.draw.rect(Pygame.screen, Pygame.agent, pygame.Rect(node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2,5,5))
+        #     pygame.draw.line(Pygame.screen, (100, 255, 255), (node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2), (nodes[node[2]][0]*Pygame.gridSize+Pygame.gridSize//2,nodes[node[2]][1]*Pygame.gridSize+Pygame.gridSize//2),5)
+        # for node in closedList:
+        #     pygame.draw.rect(Pygame.screen, (100, 0, 75), pygame.Rect(node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2,5,5))
+        #     pygame.draw.line(Pygame.screen, (100, 255, 255), (node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2), (nodes[node[2]][0]*Pygame.gridSize+Pygame.gridSize//2,nodes[node[2]][1]*Pygame.gridSize+Pygame.gridSize//2),5)
+        #
+        # Pygame.update()
+        # time.sleep(0.05)
 
 
 def depthFirstSearch(currentPos, finish, walls, r):
@@ -148,7 +163,6 @@ def depthFirstSearch(currentPos, finish, walls, r):
                     continue
 
             # Save and check if we ever got stuck during search
-            print(neighbour)
             path = depthFirstSearch(neighbour, finish, walls, r)
             if not path == []:
                 return [currentPos] + path
@@ -258,13 +272,15 @@ def custom(start, finish, mapList, r):
 
     # Pool of working threads outside of main thread
     pool = ThreadPool(processes=1)
+    csGraphMap = copy.deepcopy(graphMap)
     async_result = pool.apply_async(customAlg, (graphMap, (centerX, centerY), finish, r))  # Run algorithm on seperate thread
 
     # Run algorithm on main thread
-    csPath = customAlg(graphMap, (centerX, centerY), start, r[::-1])
+    csPath = customAlg(csGraphMap, (centerX, centerY), start, r[::-1])
 
     # Get results from thread
     cfPath = async_result.get()
+    pool.close()
 
     return cfPath[::-1] + csPath
 
@@ -304,10 +320,11 @@ def customAlg(graphMap,startPos, goal, r):
 
         if currentPos == path[len(path)-1]:
             path.remove(currentPos)
+            graphMap[currentPos[0]][currentPos[1]] = False
 
-        for node in path:
-            pygame.draw.rect(Pygame.screen, Pygame.agent, pygame.Rect(node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2,5,5))
-            Pygame.update()
-        time.sleep(0.1)
+        # for node in path:
+        #     pygame.draw.rect(Pygame.screen, Pygame.agent, pygame.Rect(node[0]*Pygame.gridSize+Pygame.gridSize//2,node[1]*Pygame.gridSize+Pygame.gridSize//2,5,5))
+        #     Pygame.update()
+        # time.sleep(0.1)
 
     return path

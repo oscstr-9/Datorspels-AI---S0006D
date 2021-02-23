@@ -52,12 +52,12 @@ def drawMap(mapList):
 
 
 # Takes list of (x, y) tuples to print path
-def drawPath(path):
+def drawPath(path, color):
     # Scales the path to fit the map
     scaledPath = []
     for tiles in path:
         scaledPath.append(((tiles[0] * gridSize) + gridSize // 2, (tiles[1] * gridSize) + gridSize // 2))
-    pygame.draw.lines(screen, agent, False, scaledPath, 5)
+    pygame.draw.lines(screen, color, False, scaledPath, 5)
 
 def update():
     pygame.display.flip()

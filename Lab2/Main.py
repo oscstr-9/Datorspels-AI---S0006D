@@ -7,7 +7,7 @@ def main():
     if algorithm == "all":
         checks = int(input("how many times should the algorithms be checked?: "))
         for mapNr in range(3):
-            testAlgs(makeMap(mapNr), mapNr+1, checks)
+            testAlgs(makeMap(mapNr+1), mapNr + 1, checks)
             Pygame.update()
 
     else:
@@ -36,7 +36,7 @@ def main():
 
 
 def makeMap(mapNr):
-    f = open("maps/Map" + str(mapNr + 1) + ".txt", "r")
+    f = open("maps/Map" + str(mapNr) + ".txt", "r")
 
     # parse map file
     mapLines = f.readlines()

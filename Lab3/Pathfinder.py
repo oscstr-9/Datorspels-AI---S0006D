@@ -1,4 +1,6 @@
 import Map
+import FogOfWar
+import Agents
 
 def heuristic(neighbour, finish, g, r):
     multiplier = 1
@@ -7,10 +9,13 @@ def heuristic(neighbour, finish, g, r):
     else:
         neighbour.append(g+1.4)
 
-    if Map.map[neighbour[0]][neighbour[1]] == "G":
+    if Map.map[neighbour[0]][neighbour[1]] in ("G", "t"):
         multiplier = 2
     else:
         multiplier = 1
+
+    if not FogOfWar.fogOfWar[neighbour[0]][neighbour[1]]:
+        multiplier *= 0.7
 
     dx = abs(neighbour[0] - finish[0])
     dy = abs(neighbour[1] - finish[1])
@@ -38,7 +43,7 @@ def addToOpen(openList, closedList, neighbour):
             return
     openList.append(neighbour)
 
-def aStar(startPos, finishPos, r):
+def aStar(startPos, finishPos, r, agent):
     mapList = Map.map
     i = 0
     openList = []
@@ -47,6 +52,9 @@ def aStar(startPos, finishPos, r):
     start = [startPos[0], startPos[1], -1, 0, 0, 0]
     finish = [finishPos[0], finishPos[1], 0, 0, 0, 0]
     openList.append(start)
+    if agent.getRole() != "explorer":
+        # also exclude fogOfWar
+        print("hello")
 
     while len(openList) > 0:
         #sort list
@@ -65,20 +73,20 @@ def aStar(startPos, finishPos, r):
             return path[::-1]
 
         for next in r:
-            if mapList[next[0] + currentPos[0]][next[1] + currentPos[1]] == "B" or mapList[next[0] + currentPos[0]][next[1] + currentPos[1]] == "V":
+            if mapList[next[0] + currentPos[0]][next[1] + currentPos[1]] in ("B", "V"):
                 continue
 
             elif next == (1, 1):
-                if mapList[currentPos[0]][currentPos[1] + 1] == "B" or mapList[currentPos[0] + 1][currentPos[1]] == "B" or mapList[currentPos[0]][currentPos[1] + 1] == "V" or mapList[currentPos[0] + 1][currentPos[1]] == "V":
+                if mapList[currentPos[0]][currentPos[1] + 1] in ("B", "V") or mapList[currentPos[0] + 1][currentPos[1]] in ("B", "V"):
                     continue
             elif next == (-1, 1):
-                if mapList[currentPos[0]][currentPos[1] + 1] == "B" or mapList[currentPos[0] + -1][currentPos[1]] == "B" or mapList[currentPos[0]][currentPos[1] + 1] == "V" or mapList[currentPos[0] + -1][currentPos[1]] == "V":
+                if mapList[currentPos[0]][currentPos[1] + 1] in ("B", "V") or mapList[currentPos[0] + -1][currentPos[1]] in ("B", "V"):
                     continue
             elif next == (1, -1):
-                if mapList[currentPos[0]][currentPos[1] + -1] == "B" or mapList[currentPos[0] + 1][currentPos[1]] == "B" or mapList[currentPos[0]][currentPos[1] + -1] == "V" or mapList[currentPos[0] + 1][currentPos[1]] == "V":
+                if mapList[currentPos[0]][currentPos[1] + -1] in ("B", "V") or mapList[currentPos[0] + 1][currentPos[1]] in ("B", "V"):
                     continue
             elif next == (-1, -1):
-                if mapList[currentPos[0]][currentPos[1] + -1] == "B" or mapList[currentPos[0] + -1][currentPos[1]] == "B" or mapList[currentPos[0]][currentPos[1] + -1] == "V" or mapList[currentPos[0] + -1][currentPos[1]] == "V":
+                if mapList[currentPos[0]][currentPos[1] + -1] in ("B", "V") or mapList[currentPos[0] + -1][currentPos[1]] in ("B", "V"):
                     continue
 
             neighbour = [next[0] + currentPos[0], next[1] + currentPos[1], i]
@@ -91,8 +99,9 @@ def aStar(startPos, finishPos, r):
             addToOpen(openList, closedList, neighbour)
         i += 1
 
-def findPath(start, finish):
+def findPath(agent, finish):
+    start = agent.getPos()
     r = ((1, 1), (1, 0), (0, 1), (-1, 1), (1, -1),(-1, 0), (0, -1), (-1, -1))
 
-    path = aStar(start, finish, r)
+    path = aStar(start, finish, r, agent)
     return (path)

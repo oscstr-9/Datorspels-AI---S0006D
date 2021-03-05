@@ -9,18 +9,21 @@ class agent:
         self.state = StateManager.idle()
         self.timer = time.time()
         self.path = []
+        self.locked = False
+        self.inventory = "empty"
 
     def getPos(self):
         return [self.x, self.y]
     def setPos(self, pos):
-        if self.role != "upgrading":
+        if not self.locked:
             self.x = pos[0]
             self.y = pos[1]
 
     def getState(self):
         return self.state
     def setState(self, state):
-        self.state = state
+        if not self.locked:
+            self.state = state
 
     def getRole(self):
         return self.role
@@ -40,3 +43,11 @@ class agent:
     def popPath(self):
         self.path.pop(0)
         return self.path
+
+    def setLocked(self, locked):
+        self.locked = locked
+
+    def getInventory(self):
+        return self.inventory
+    def setInventory(self, inventory):
+        self.inventory = inventory

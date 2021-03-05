@@ -1,3 +1,4 @@
+import random
 map = 0
 
 def makeMap():
@@ -30,3 +31,7 @@ def generateMinerals(map):
                 map[pos[0]][pos[1]] = "I"
                 pos = [random.randrange(1, 99), random.randrange(1, 99)]
                 break
+
+def changeMap(change, pos):
+    global map
+    map[pos[0]][pos[1]] = change

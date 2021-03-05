@@ -3,6 +3,8 @@ import FogOfWar
 import Agents
 import StateManager
 import Map
+import TimeMultiplier
+import BaseManager
 import random
 
 agents = []
@@ -15,18 +17,15 @@ def main():
     FogOfWar.updateFogOfWar(agents, r)
     Pygame.init()
 
-    for i in range(10):
-        agents[i].setState(StateManager.upgrading())
-        agents[i].state.execute(agents[i], "explorer")
+    TimeMultiplier.setTimeMultiplier(int(input("Set a time multiplier: ")))
 
-    while True:
-        Pygame.drawAgents(agents)
-        Pygame.update()
-        for agent in agents:
-            if agent.role == "explorer":
-                agent.state.execute(agent)
-        FogOfWar.updateFogOfWar(agents, r)
-        Pygame.drawMap()
+    for i in range(5):
+        agents[i].setState(StateManager.upgrading())
+        agents[i].setRole("explorer")
+
+    updateGame(r)
+
+
 
 def setupStartPos(r):
     map = Map.map
@@ -41,6 +40,7 @@ def setupStartPos(r):
                 redo = False
 
     map[startPos[0]][startPos[1]] = "S"
+    BaseManager.base(startPos)
 
     for i in range(50):
         for next in r:
@@ -49,5 +49,14 @@ def setupStartPos(r):
             agents.append(Agents.agent((startPos[0]+next[0], startPos[1]+next[1]), "state"))
             next[2] += 1
             break
+
+def updateGame(r):
+    while True:
+        Pygame.drawAgents(agents)
+        Pygame.update()
+        for agent in agents:
+            agent.state.execute(agent)
+        FogOfWar.updateFogOfWar(agents, r)
+        Pygame.drawMap()
 
 main()

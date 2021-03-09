@@ -53,8 +53,6 @@ def timerFunc(personList, timeMultiplier):
 def updateAgents(personList, diff):
     for i in range(diff):
         for person in personList:
-            
-            
 
             if(person.happiness <= 30 and person.hasPlans == person.sentMsg and person.state.getStateName != "sleeping"):
                 person.sendMsg(personList)

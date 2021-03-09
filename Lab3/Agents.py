@@ -2,7 +2,7 @@ import StateManager
 import time
 
 class agent:
-    def __init__(self, pos, state):
+    def __init__(self, pos, base):
         self.x = pos[0]
         self.y = pos[1]
         self.role = "worker"
@@ -11,9 +11,11 @@ class agent:
         self.path = []
         self.locked = False
         self.inventory = "empty"
+        self.base = base
+        self.job = "idle"
 
     def getPos(self):
-        return [self.x, self.y]
+        return (self.x, self.y)
     def setPos(self, pos):
         if not self.locked:
             self.x = pos[0]
@@ -39,7 +41,6 @@ class agent:
         return self.path
     def setPath(self, path):
         self.path = path
-
     def popPath(self):
         self.path.pop(0)
         return self.path
@@ -51,3 +52,8 @@ class agent:
         return self.inventory
     def setInventory(self, inventory):
         self.inventory = inventory
+
+    def getJob(self):
+        return self.job
+    def setJob(self, job):
+        self.job = job

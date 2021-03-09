@@ -45,7 +45,7 @@ def drawMap():
         "M": (180, 140, 102),
         "B": (0, 26, 0),
         "T": (25, 77, 0),
-        "t": (51, 0, 25),
+        "t": (75, 0, 25),
         "G": (77, 51, 0),
         "V": (51, 153, 255),
         "I": (179, 191, 255),
@@ -75,9 +75,12 @@ def drawAgents(agents):
         pos = agent.getPos()
         role = agent.getRole()
         rect = pygame.Rect(pos[0] * gridSize + gridSize//2 - agentSize//2, pos[1] * gridSize + gridSize//2 - agentSize//2, agentSize, agentSize)
-        if role == "worker":
+        if agent.getJob() == "woodcutter":
             pygame.draw.rect(screen, workerColor, rect, 1)
             screen.fill(workerColor, rect, 0)
+        elif agent.getJob() == "miner":
+            pygame.draw.rect(screen, workerColor, rect, 1)
+            screen.fill((255,0,0), rect, 0)
         elif role == "builder":
             pygame.draw.rect(screen, builderColor, rect, 1)
             screen.fill(builderColor, rect, 0)
@@ -91,6 +94,7 @@ def drawAgents(agents):
 # updates the display and allows for ESC to quit
 def update():
     pygame.display.flip()
+    drawMap()
     # Has the ESCAPE key been pressed?
     for event in pygame.event.get():
         if event.type == KEYDOWN:
@@ -101,10 +105,6 @@ def update():
                     TimeMultiplier.setTimeMultiplier(0)
                 else:
                     TimeMultiplier.setTimeMultiplier(localTimeMultiplier)
-
-            if event.key == K_LSHIFT:
-                localTimeMultiplier = abs(input())
-                TimeMultiplier.setTimeMultiplier(localTimeMultiplier)
 
             if event.key == K_ESCAPE:
                 # Done! Time to quit.

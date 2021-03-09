@@ -15,16 +15,12 @@ class Person:
         self.happiness = happiness
         
         self.state = State.sleeping()
-<<<<<<< HEAD
         self.plans = 0
         
     def Update(self):
         if(self.happiness <= 20 && self.state != socializing()):
             #send message
         self.state.execute(self)
-=======
-        self.hasPlans = False
-        self.sentMsg = False
 
     def sendMsg(self, personList):
         if(self.hasPlans == False):#Has no plans / needs to make plans

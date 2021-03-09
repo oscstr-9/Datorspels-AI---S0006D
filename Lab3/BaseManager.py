@@ -14,6 +14,10 @@ class base():
         self.pos = pos
         self.buildings = []
 
+    def getPos(self):
+        pos = (self.pos[0], self.pos[1])
+        return pos
+
     def addWood(self):
         self.wood += 1
 

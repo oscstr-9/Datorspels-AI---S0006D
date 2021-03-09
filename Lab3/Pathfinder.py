@@ -44,6 +44,7 @@ def addToOpen(openList, closedList, neighbour):
     openList.append(neighbour)
 
 def aStar(startPos, finishPos, r, agent):
+    nonExplorer = False
     mapList = Map.map
     i = 0
     openList = []
@@ -51,10 +52,12 @@ def aStar(startPos, finishPos, r, agent):
     nodes = []
     start = [startPos[0], startPos[1], -1, 0, 0, 0]
     finish = [finishPos[0], finishPos[1], 0, 0, 0, 0]
+    unwalkables = ("B", "V")
     openList.append(start)
+
     if agent.getRole() != "explorer":
         # also exclude fogOfWar
-        print("hello")
+        nonExplorer = True
 
     while len(openList) > 0:
         #sort list
@@ -73,20 +76,23 @@ def aStar(startPos, finishPos, r, agent):
             return path[::-1]
 
         for next in r:
-            if mapList[next[0] + currentPos[0]][next[1] + currentPos[1]] in ("B", "V"):
+            if nonExplorer and not FogOfWar.fogOfWar[next[0] + currentPos[0]][next[1] + currentPos[1]]:
+                continue
+
+            if mapList[next[0] + currentPos[0]][next[1] + currentPos[1]] in unwalkables:
                 continue
 
             elif next == (1, 1):
-                if mapList[currentPos[0]][currentPos[1] + 1] in ("B", "V") or mapList[currentPos[0] + 1][currentPos[1]] in ("B", "V"):
+                if mapList[currentPos[0]][currentPos[1] + 1] in unwalkables or mapList[currentPos[0] + 1][currentPos[1]] in unwalkables:
                     continue
             elif next == (-1, 1):
-                if mapList[currentPos[0]][currentPos[1] + 1] in ("B", "V") or mapList[currentPos[0] + -1][currentPos[1]] in ("B", "V"):
+                if mapList[currentPos[0]][currentPos[1] + 1] in unwalkables or mapList[currentPos[0] + -1][currentPos[1]] in unwalkables:
                     continue
             elif next == (1, -1):
-                if mapList[currentPos[0]][currentPos[1] + -1] in ("B", "V") or mapList[currentPos[0] + 1][currentPos[1]] in ("B", "V"):
+                if mapList[currentPos[0]][currentPos[1] + -1] in unwalkables or mapList[currentPos[0] + 1][currentPos[1]] in unwalkables:
                     continue
             elif next == (-1, -1):
-                if mapList[currentPos[0]][currentPos[1] + -1] in ("B", "V") or mapList[currentPos[0] + -1][currentPos[1]] in ("B", "V"):
+                if mapList[currentPos[0]][currentPos[1] + -1] in unwalkables or mapList[currentPos[0] + -1][currentPos[1]] in unwalkables:
                     continue
 
             neighbour = [next[0] + currentPos[0], next[1] + currentPos[1], i]
@@ -102,6 +108,5 @@ def aStar(startPos, finishPos, r, agent):
 def findPath(agent, finish):
     start = agent.getPos()
     r = ((1, 1), (1, 0), (0, 1), (-1, 1), (1, -1),(-1, 0), (0, -1), (-1, -1))
-
     path = aStar(start, finish, r, agent)
     return (path)

@@ -107,6 +107,5 @@ def aStar(startPos, finishPos, r, agent):
 
 def findPath(agent, finish):
     start = agent.getPos()
-    r = ((1, 1), (1, 0), (0, 1), (-1, 1), (1, -1),(-1, 0), (0, -1), (-1, -1))
-    path = aStar(start, finish, r, agent)
+    path = aStar(start, finish, Map.r, agent)
     return (path)

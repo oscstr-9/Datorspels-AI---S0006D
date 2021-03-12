@@ -1,4 +1,5 @@
 import Map
+import StatParser
 woodList = []
 woodLeft = []
 mineralList = []
@@ -38,7 +39,7 @@ def treeFound(pos):
     for i in range(len(woodLeft)):
         if pos == (woodLeft[i][0], woodLeft[i][1]):
             woodLeft[i][2] += 1
-            if woodLeft[i][2] >= 5:
+            if woodLeft[i][2] >= StatParser.statDict["treeLife"]:
                 woodLeft.pop(i)
             break
 
@@ -46,13 +47,14 @@ def treeFound(pos):
 def gatherMinerals(agent):
     # If the world is out of ores, become woodcutter
     if not mineralList:
-        agent.setJob("woodcutter")
+        agent.setJob("woodCutter")
         return False
     # When agent stands on ore and is planning to pick it up, remove it from list and change texture
     for i in range(len(mineralList)):
         if agent.getPos() == (mineralList[i][0], mineralList[i][1]):
             if not agent.getPath():
                 Map.changeMap("M", (mineralList[i][0], mineralList[i][1]))
+                mineralList.remove((mineralList[i][0], mineralList[i][1]))
                 agent.setInventory("minerals")
             return True
     return False

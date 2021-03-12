@@ -5,6 +5,7 @@ import FogOfWar
 import TimeMultiplier
 import Resources
 import BaseManager
+import StatParser
 import time
 import random
 
@@ -17,9 +18,9 @@ class explore:
         # Delay walking speed
         diff = (time.time() - Agents.agent.getTimer(agent)) * TimeMultiplier.timeMultiplier
         if map[pos[0]][pos[1]] in ("G", "T", "t"):
-            traverseTime = 20
+            traverseTime = StatParser.statDict["tsSlowed"]
         else:
-            traverseTime = 10
+            traverseTime = StatParser.statDict["tsGround"]
 
         if diff >= traverseTime:
             agent.setTimer(time.time())
@@ -27,7 +28,7 @@ class explore:
             # Set/declare variables
             fogOfWar = FogOfWar.fogOfWar
             fogOfWarList = FogOfWar.fogOfWarList
-            r = ([0, 0, 0], [1, 1, 0], [1, 0, 0], [0, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, 0, 0], [0, -1, 0], [-1, -1, 0])
+            r =  Map.r
             path = agent.getPath()
             woodsFound = False
             WoodsPos = (0, 0)
@@ -42,8 +43,8 @@ class explore:
             # If has no path, get random finish in unexplored area
             if not woodsFound:
                 if not fogOfWarList:
-                    agent.setState(idle())
-                if not path:
+                    agent.setState(returnHome())
+                elif not path:
                     index = random.randrange(0, len(fogOfWarList)-1)
                     goal = fogOfWarList[index]
                     agent.setPath(Pathfinder.findPath(agent, goal))
@@ -57,14 +58,10 @@ class explore:
                     agent.setPath([])
                 agent.setPos(woodsPos)
 
-class idle:
-    def execute(self, agent):
-        # Empty
-        return
 
 class locateMaterials:
     def execute(self, agent):
-        if agent.getJob() == "woodcutter":
+        if agent.getJob() == "woodCutter":
             self.findWood(agent)
 
         elif agent.getJob() == "miner":
@@ -92,6 +89,7 @@ class locateMaterials:
                 agent.setTimer(time.time())
                 agent.setState(woodCutting())
 
+
     def findMinerals(self, agent):
         mineralPrioList = []
         pos = agent.getPos()
@@ -117,9 +115,9 @@ class locateMaterials:
     def move(self, agent, pos):
         diff = (time.time() - agent.getTimer()) * TimeMultiplier.timeMultiplier
         if Map.map[pos[0]][pos[1]] in ("G", "T", "t"):
-            traverseTime = 20
+            traverseTime = StatParser.statDict["tsSlowed"]
         else:
-            traverseTime = 10
+            traverseTime = StatParser.statDict["tsGround"]
 
         if diff >= traverseTime:
             agent.setTimer(time.time())
@@ -131,7 +129,7 @@ class woodCutting():
     def execute(self, agent):
         diff = (time.time() - agent.getTimer()) * TimeMultiplier.timeMultiplier
         agent.setLocked(True)
-        if diff >= 30:
+        if diff >= StatParser.statDict["wcSpeed"]:
             agent.setInventory("wood")
             agent.setTimer(time.time())
             agent.setLocked(False)
@@ -141,14 +139,14 @@ class woodCutting():
 class returnHome():
     def execute(self, agent):
         pos = agent.getPos()
-        if agent.getPath() == []:
+        if agent.getPath() == [] or agent.getPath()[len(agent.getPath())-1] != agent.base.getPos():
             agent.setPath(Pathfinder.findPath(agent, agent.base.getPos()))
-        else:
+        elif not agent.getLocked():
             diff = (time.time() - Agents.agent.getTimer(agent)) * TimeMultiplier.timeMultiplier
             if Map.map[pos[0]][pos[1]] in ("G", "T", "t"):
-                traverseTime = 20
+                traverseTime = StatParser.statDict["tsSlowed"]
             else:
-                traverseTime = 10
+                traverseTime = StatParser.statDict["tsGround"]
 
             if diff >= traverseTime:
                 agent.setTimer(time.time())
@@ -157,33 +155,159 @@ class returnHome():
 
                 if agent.getPos() == agent.base.getPos():
                     agent.setPath([])
+
                     if agent.getInventory() == "wood":
                         agent.base.addWood()
                     elif agent.getInventory() == "minerals":
                         agent.base.addMinerals()
 
                     agent.setInventory("empty")
-                    agent.setState(locateMaterials())
+                    if agent.getRole() == "worker":
+                        agent.setState(locateMaterials())
+                    elif agent.getRole() == "builder":
+                        agent.setState(idle())
+                    elif agent.getJob() in ("coalWorker", "weaponSmith", "smelteryWorker"):
+                        agent.setState(findWorkStation())
 
-class building:
+
+class findWorkStation:
     def execute(self, agent):
+        if not agent.getPath():
+            workDict = {
+                "coalWorker": "coalFurnace",
+                "weaponSmith": "blacksmith",
+                "smelteryWorker": "smeltery"
+            }
+            for building in agent.base.getBuildings():
+                if building.getName() == workDict[agent.getJob()] and not building.getOccupied():
+                    agent.setPath(Pathfinder.findPath(agent, building.getPos()))
+                    building.setOccupied(True)
+                    agent.setJob(building)
+                    break
+        else:
+            pos = agent.getPos()
+            diff = (time.time() - Agents.agent.getTimer(agent)) * TimeMultiplier.timeMultiplier
+            if Map.map[pos[0]][pos[1]] in ("G", "T", "t"):
+                traverseTime = StatParser.statDict["tsSlowed"]
+            else:
+                traverseTime = StatParser.statDict["tsGround"]
+
+            if diff >= traverseTime:
+                agent.setTimer(time.time())
+                agent.setPos(agent.getPath()[0])
+                agent.setPath(agent.popPath())
+
+                if not agent.getPath():
+                    agent.setState(work())
+
+
+class work:
+    def execute(self, agent):
+        if not agent.base.getBuildList:
+            agent.getJob().work(agent)
+
+class build:
+    def execute(self, agent):
+        readyToBuild = False
         # Where to build
-        # for tiles around spawn:
+        if agent.base.getBuildList() and not agent.getLocked():
+            pos = agent.getPos()
             # find unused buildable tile
+            for next in Map.r:
+                if Map.map[pos[0] + next[0]][pos[1] + next[1]] in ("M", "G") and FogOfWar.fogOfWar[pos[0] + next[0]][pos[1] + next[1]]:
+                    # What to build
+                    for building in agent.base.getBuildList():
+                        print(building[1])
+                        print(agent.getId())
+                        if building[0] == "coalFurnace":
+                            if building[1] == 0 or building[1] == agent.getId():
+                                readyToBuild = agent.base.buildCoalFurnace(agent, (pos[0] + next[0], pos[1] + next[1]))
+                                building[1] = agent.getId()
+                                if readyToBuild == True:
+                                    agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                break
 
-        # What to build
-        # get build list from somewhere?
+                        elif building[0] == "smeltery":
+                            if building[1] == 0 or building[1] == agent.getId():
+                                agent.base.buildSmeltery(agent, (pos[0] + next[0], pos[1] + next[1]))
+                                building[1] = agent.getId()
+                                if readyToBuild == True:
+                                    agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                break
 
-        # When to hire
-        # if diff = time left to build  - time to train guy
-            # train guy
+                        elif building[0] == "blacksmith":
+                            if building[1] == 0 or building[1] == agent.getId():
+                                agent.base.buildBlacksmith(agent, (pos[0] + next[0], pos[1] + next[1]))
+                                building[1] = agent.getId()
+                                if readyToBuild:
+                                    agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                break
 
-        # When to tell guy to work
-        # building finished, add hired guy to building
+                        elif building[0] == "trainingCamp":
+                            if building[1] == 0 or building[1] == agent.getId():
+                                agent.base.buildTrainingcamp(agent, (pos[0] + next[0], pos[1] + next[1]))
+                                building[1] = agent.getId()
+                                if readyToBuild:
+                                    agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                break
+                    break
+        elif agent.getPos() == agent.getJob()[1]:
+            diff = (time.time() - agent.getTimer()) * TimeMultiplier.timeMultiplier
 
-        #   When finished go idle until build list has content
+            if agent.getJob()[0] == "coalFurnace*":
+                if diff >= StatParser.statDict["cfBuildTime"]:
+                    agent.base.addBuilding(BaseManager.coalFurnace(agent.getPos()))
+                    agent.setJob("idle")
+                    agent.setLocked(False)
+                    agent.setState(returnHome())
 
-        pass
+            if agent.getJob()[0] == "smeltery*":
+                if diff >= StatParser.statDict["smelteryBuildTime"]:
+                    agent.base.addBuilding(BaseManager.smeletery(agent.getPos()))
+                    agent.setJob("idle")
+                    agent.setLocked(False)
+                    agent.setState(returnHome())
+
+            if agent.getJob()[0] == "blacksmith*":
+                if diff >= StatParser.statDict["bsBuildTime"]:
+                    agent.base.addBuilding(BaseManager.blacksmith(agent.getPos()))
+                    agent.setJob("idle")
+                    agent.setLocked(False)
+                    agent.setState(returnHome())
+
+            if agent.getJob()[0] == "trainingCamp":
+                if diff >= StatParser.statDict["tcBuildTime"]:
+                    agent.base.addBuilding(BaseManager.trainingCamp(agent.getPos()))
+                    agent.setJob("idle")
+                    agent.setLocked(False)
+                    agent.setState(returnHome())
+
+
+            # When to hire
+            elif agent.getJob()[0] == "coalFurnace":
+                if StatParser.statDict["cfBuildTime"] - time.time() - agent.getTimer() <= StatParser.statDict["artisanUpgradeTime"]:
+                    Agents.addToJobList("coalWorker")
+                    agent.setJob(("coalFurnace*", agent.getJob()[1]))
+            elif agent.getJob()[0] == "smeltry":
+                if StatParser.statDict["smelteryBuildTime"] - time.time() - agent.getTimer() <= StatParser.statDict["artisanUpgradeTime"]:
+                    Agents.addToJobList("smelteryWorker")
+                    agent.setJob(("smeltry*", agent.getJob()[1]))
+            elif agent.getJob()[0] == "blacksmith":
+                if StatParser.statDict["bsBuildTime"] - time.time() - agent.getTimer() <= StatParser.statDict["artisanUpgradeTime"]:
+                    Agents.addToJobList("weaponSmith")
+                    agent.setJob(("blacksmith*", agent.getJob()[1]))
+
+            else:
+            # When finished go idle until build list has content
+                agent.setState(returnHome())
+
+
+class idle:
+    def execute(self, agent):
+        if agent.getRole() == "builder" and agent.base.getBuildList():
+            agent.setState(build())
+        return
+
 
 class upgrading:
     def execute(self, agent):
@@ -193,17 +317,31 @@ class upgrading:
 
         diff = (time.time() - agent.getTimer()) * TimeMultiplier.timeMultiplier
 
-        if agent.getRole() == "explorer":
-            if diff >= 60:
+        if agent.getJob() == "explorer":
+            if diff >= StatParser.statDict["explorerUpgradeTime"]:
+                agent.setRole("explorer")
                 agent.setState(explore())
                 agent.setLocked(False)
 
-        elif agent.getRole() == "builder":
-            if diff >= 60:
-                agent.setState(build())
+        elif agent.getJob() in ("coalWorker", "weaponSmith", "smelteryWorker", "builder"):
+            if diff >= StatParser.statDict["artisanUpgradeTime"]:
+                if agent.getJob() == "builder":
+                    agent.setRole("builder")
+                elif agent.getJob() == "coalWorker":
+                    agent.setRole("coalWorker")
+                elif agent.getJob() == "weaponSmith":
+                    agent.setRole("weaponSmith")
+                elif agent.getJob() == "smelteryWorker":
+                    agent.setRole("smelteryWorker")
+
+                agent.setState(returnHome())
                 agent.setLocked(False)
 
-        elif agent.getRole() == "soldier":
-            if diff >= 120:
+        elif agent.getJob() == "soldier":
+            if diff >= StatParser.statDict["soldierUpgradeTime"]:
+                agent.setRole("soldier")
                 agent.setState(idle())
                 agent.setLocked(False)
+
+        elif agent.getJob() in ("woodCutter", "miner"):
+            agent.setState(locateMaterials())

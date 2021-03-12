@@ -15,12 +15,6 @@ agentSize = 5
 screen = 0
 localTimeMultiplier = 1
 
-
-workerColor = (0, 100, 150)
-builderColor = (0, 130, 150)
-explorerColor = (0, 160, 150)
-soldierColor = (0, 190, 150)
-
 # Initializes base data
 def init():
     map = Map.map
@@ -53,7 +47,8 @@ def drawMap():
         "CF": (192, 192, 192),
         "SM": (255, 128, 0),
         "BS": (255, 0, 0),
-        "TC": (255, 153, 153)
+        "TC": (255, 153, 153),
+        "construction": (255, 255, 255)
     }
     fogColor = (0, 43, 51)
     mapList = Map.map
@@ -71,25 +66,21 @@ def drawMap():
 
 # Draws agents onto display
 def drawAgents(agents):
+    colorDict = {
+        "worker": (0, 100, 150),
+        "explorer": (160, 90, 25),
+        "builder": (255, 0, 0),
+        "coalWorker": (0, 255, 0),
+        "weaponSmith": (240, 240, 170),
+        "smelteryWorker": (240, 170, 240),
+        "soldier": (0, 190, 150)
+    }
     for agent in agents:
         pos = agent.getPos()
-        role = agent.getRole()
         rect = pygame.Rect(pos[0] * gridSize + gridSize//2 - agentSize//2, pos[1] * gridSize + gridSize//2 - agentSize//2, agentSize, agentSize)
-        if agent.getJob() == "woodcutter":
-            pygame.draw.rect(screen, workerColor, rect, 1)
-            screen.fill(workerColor, rect, 0)
-        elif agent.getJob() == "miner":
-            pygame.draw.rect(screen, workerColor, rect, 1)
-            screen.fill((255,0,0), rect, 0)
-        elif role == "builder":
-            pygame.draw.rect(screen, builderColor, rect, 1)
-            screen.fill(builderColor, rect, 0)
-        elif role == "explorer":
-            pygame.draw.rect(screen, explorerColor, rect, 1)
-            screen.fill(explorerColor, rect, 0)
-        elif role == "soldier":
-            pygame.draw.rect(screen, soldierColor, rect, 1)
-            screen.fill(soldierColor, rect, 0)
+
+        pygame.draw.rect(screen, colorDict[agent.getRole()], rect, 1)
+        screen.fill(colorDict[agent.getRole()], rect, 0)
 
 # updates the display and allows for ESC to quit
 def update():

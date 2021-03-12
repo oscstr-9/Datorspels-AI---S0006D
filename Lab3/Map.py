@@ -1,5 +1,7 @@
+import StatParser
 import random
 map = 0
+r = ([0, 0, 0], [1, 1, 0], [1, 0, 0], [0, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, 0, 0], [0, -1, 0], [-1, -1, 0])
 
 def makeMap():
     global map
@@ -23,7 +25,7 @@ def makeMap():
 
 def generateMinerals(map):
     pos = [random.randrange(1, 99), random.randrange(1, 99)]
-    for i in range(60):
+    for i in range(StatParser.statDict["ores"]):
         while True:
             if map[pos[0]][pos[1]] in ("B", "V", "T"):
                 pos = [random.randrange(1, 99), random.randrange(1, 99)]

@@ -1,10 +1,12 @@
 import StateManager
 import time
+jobList = []
 
 class agent:
-    def __init__(self, pos, base):
+    def __init__(self, pos, base, id):
         self.x = pos[0]
         self.y = pos[1]
+        self.id = id
         self.role = "worker"
         self.state = StateManager.idle()
         self.timer = time.time()
@@ -20,6 +22,9 @@ class agent:
         if not self.locked:
             self.x = pos[0]
             self.y = pos[1]
+
+    def getId(self):
+        return self.id
 
     def getState(self):
         return self.state
@@ -47,6 +52,8 @@ class agent:
 
     def setLocked(self, locked):
         self.locked = locked
+    def getLocked(self):
+        return self.locked
 
     def getInventory(self):
         return self.inventory
@@ -57,3 +64,9 @@ class agent:
         return self.job
     def setJob(self, job):
         self.job = job
+def addToJobList(job):
+    global jobList
+    jobList.append(job)
+def removeFromJobList():
+    global jobList
+    jobList.pop(0)

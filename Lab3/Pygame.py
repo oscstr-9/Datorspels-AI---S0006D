@@ -84,8 +84,6 @@ def drawAgents(agents):
 
 # updates the display and allows for ESC to quit
 def update():
-    pygame.display.flip()
-    drawMap()
     # Has the ESCAPE key been pressed?
     for event in pygame.event.get():
         if event.type == KEYDOWN:
@@ -101,6 +99,8 @@ def update():
                 # Done! Time to quit.
                 pygame.quit()
                 return False
+    pygame.display.update()
+    drawMap()
 
     return True
 

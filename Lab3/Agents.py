@@ -27,10 +27,9 @@ class agent:
         return self.id
 
     def getState(self):
-        return self.state
+        return self.state.getStateName()
     def setState(self, state):
-        if not self.locked:
-            self.state = state
+        self.state = state
 
     def getRole(self):
         return self.role

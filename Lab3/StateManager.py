@@ -58,6 +58,8 @@ class explore:
                     agent.setPath([])
                 agent.setPos(woodsPos)
 
+    def getStateName(self):
+        return "explore"
 
 class locateMaterials:
     def execute(self, agent):
@@ -69,12 +71,13 @@ class locateMaterials:
 
     def findWood(self, agent):
         woodPrioList = []
-        pos = agent.getPos()
+        pos = agent.base.getPos()
         # Add all trees in the world and sort by closeness to spawn
         for tree in Resources.woodLeft:
             if FogOfWar.fogOfWar[tree[0]][tree[1]]:
                 woodPrioList.append((tree[0], tree[1], abs(tree[0] - pos[0]) + abs(tree[1] - pos[1])))
         woodPrioList.sort(key=lambda x: x[2])
+        print (woodPrioList)
 
 
         # If agent has no path, go to closest found tree
@@ -83,7 +86,7 @@ class locateMaterials:
             Resources.treeFound((woodPrioList[0][0], woodPrioList[0][1]))
 
         elif agent.getPath():
-            self.move(agent, pos)
+            self.move(agent, agent.getPos())
 
             if Resources.gatherWood(agent):
                 agent.setTimer(time.time())
@@ -112,6 +115,9 @@ class locateMaterials:
                 agent.setTimer(time.time())
                 agent.setState(returnHome())
 
+    def getStateName(self):
+        return "locateMaterials"
+
     def move(self, agent, pos):
         diff = (time.time() - agent.getTimer()) * TimeMultiplier.timeMultiplier
         if Map.map[pos[0]][pos[1]] in ("G", "T", "t"):
@@ -134,6 +140,9 @@ class woodCutting():
             agent.setTimer(time.time())
             agent.setLocked(False)
             agent.setState(returnHome())
+
+    def getStateName(self):
+        return "woodCutting"
 
 
 class returnHome():
@@ -169,6 +178,8 @@ class returnHome():
                     elif agent.getJob() in ("coalWorker", "weaponSmith", "smelteryWorker"):
                         agent.setState(findWorkStation())
 
+    def getStateName(self):
+        return "returnHome"
 
 class findWorkStation:
     def execute(self, agent):
@@ -200,11 +211,19 @@ class findWorkStation:
                 if not agent.getPath():
                     agent.setState(work())
 
+    def getStateName(self):
+        return "findWorkStation"
+
 
 class work:
     def execute(self, agent):
-        if not agent.base.getBuildList:
+        if agent.base.getBuildList() == []:
+            if agent.getRole() == "smelteryWorker" and agent.base.getIron() >= 20:
+                return
             agent.getJob().work(agent)
+
+    def getStateName(self):
+        return "work"
 
 class build:
     def execute(self, agent):
@@ -217,30 +236,31 @@ class build:
                 if Map.map[pos[0] + next[0]][pos[1] + next[1]] in ("M", "G") and FogOfWar.fogOfWar[pos[0] + next[0]][pos[1] + next[1]]:
                     # What to build
                     for building in agent.base.getBuildList():
-                        print(building[1])
-                        print(agent.getId())
                         if building[0] == "coalFurnace":
                             if building[1] == 0 or building[1] == agent.getId():
                                 readyToBuild = agent.base.buildCoalFurnace(agent, (pos[0] + next[0], pos[1] + next[1]))
-                                building[1] = agent.getId()
                                 if readyToBuild == True:
                                     agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                    building[1] = agent.getId()
+                                    agent.setLocked(True)
                                 break
 
                         elif building[0] == "smeltery":
                             if building[1] == 0 or building[1] == agent.getId():
-                                agent.base.buildSmeltery(agent, (pos[0] + next[0], pos[1] + next[1]))
-                                building[1] = agent.getId()
+                                readyToBuild = agent.base.buildSmeltery(agent, (pos[0] + next[0], pos[1] + next[1]))
                                 if readyToBuild == True:
                                     agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                    building[1] = agent.getId()
+                                    agent.setLocked(True)
                                 break
 
                         elif building[0] == "blacksmith":
                             if building[1] == 0 or building[1] == agent.getId():
-                                agent.base.buildBlacksmith(agent, (pos[0] + next[0], pos[1] + next[1]))
-                                building[1] = agent.getId()
+                                readyToBuild = agent.base.buildBlacksmith(agent, (pos[0] + next[0], pos[1] + next[1]))
                                 if readyToBuild:
                                     agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                    building[1] = agent.getId()
+                                    agent.setLocked(True)
                                 break
 
                         elif building[0] == "trainingCamp":
@@ -249,6 +269,7 @@ class build:
                                 building[1] = agent.getId()
                                 if readyToBuild:
                                     agent.setPos((pos[0] + next[0], pos[1] + next[1]))
+                                    agent.setLocked(True)
                                 break
                     break
         elif agent.getPos() == agent.getJob()[1]:
@@ -257,61 +278,68 @@ class build:
             if agent.getJob()[0] == "coalFurnace*":
                 if diff >= StatParser.statDict["cfBuildTime"]:
                     agent.base.addBuilding(BaseManager.coalFurnace(agent.getPos()))
-                    agent.setJob("idle")
+                    agent.setJob("builder")
                     agent.setLocked(False)
                     agent.setState(returnHome())
 
-            if agent.getJob()[0] == "smeltery*":
+            elif agent.getJob()[0] == "smeltery*":
                 if diff >= StatParser.statDict["smelteryBuildTime"]:
-                    agent.base.addBuilding(BaseManager.smeletery(agent.getPos()))
-                    agent.setJob("idle")
+                    agent.base.addBuilding(BaseManager.smeltery(agent.getPos()))
+                    agent.setJob("builder")
                     agent.setLocked(False)
                     agent.setState(returnHome())
 
-            if agent.getJob()[0] == "blacksmith*":
+            elif agent.getJob()[0] == "blacksmith*":
                 if diff >= StatParser.statDict["bsBuildTime"]:
                     agent.base.addBuilding(BaseManager.blacksmith(agent.getPos()))
-                    agent.setJob("idle")
+                    agent.setJob("builder")
                     agent.setLocked(False)
                     agent.setState(returnHome())
 
-            if agent.getJob()[0] == "trainingCamp":
+            elif agent.getJob()[0] == "trainingCamp":
                 if diff >= StatParser.statDict["tcBuildTime"]:
                     agent.base.addBuilding(BaseManager.trainingCamp(agent.getPos()))
-                    agent.setJob("idle")
+                    agent.setJob("builder")
                     agent.setLocked(False)
                     agent.setState(returnHome())
 
 
             # When to hire
             elif agent.getJob()[0] == "coalFurnace":
-                if StatParser.statDict["cfBuildTime"] - time.time() - agent.getTimer() <= StatParser.statDict["artisanUpgradeTime"]:
+                if StatParser.statDict["cfBuildTime"] - (time.time() - agent.getTimer()) <= StatParser.statDict["artisanUpgradeTime"]:
                     Agents.addToJobList("coalWorker")
                     agent.setJob(("coalFurnace*", agent.getJob()[1]))
-            elif agent.getJob()[0] == "smeltry":
-                if StatParser.statDict["smelteryBuildTime"] - time.time() - agent.getTimer() <= StatParser.statDict["artisanUpgradeTime"]:
+            elif agent.getJob()[0] == "smeltery":
+                if StatParser.statDict["smelteryBuildTime"] - (time.time() - agent.getTimer()) <= StatParser.statDict["artisanUpgradeTime"]:
                     Agents.addToJobList("smelteryWorker")
-                    agent.setJob(("smeltry*", agent.getJob()[1]))
+                    agent.setJob(("smeltery*", agent.getJob()[1]))
             elif agent.getJob()[0] == "blacksmith":
-                if StatParser.statDict["bsBuildTime"] - time.time() - agent.getTimer() <= StatParser.statDict["artisanUpgradeTime"]:
+                if StatParser.statDict["bsBuildTime"] - (time.time() - agent.getTimer()) <= StatParser.statDict["artisanUpgradeTime"]:
                     Agents.addToJobList("weaponSmith")
                     agent.setJob(("blacksmith*", agent.getJob()[1]))
 
-            else:
-            # When finished go idle until build list has content
-                agent.setState(returnHome())
+        elif agent.base.getBuildList() == []:
+        # When finished go idle until build list has content
+            agent.setState(returnHome())
+
+    def getStateName(self):
+        return "build"
 
 
 class idle:
     def execute(self, agent):
-        if agent.getRole() == "builder" and agent.base.getBuildList():
+        if agent.getRole() == "builder" and agent.base.getBuildList() != []:
             agent.setState(build())
-        return
+        elif agent.getRole() == "builder":
+            agent.setJob("idle")
+
+    def getStateName(self):
+        return "idle"
 
 
 class upgrading:
     def execute(self, agent):
-        if agent.getState() == idle():
+        if not agent.getLocked():
             agent.setTimer(time.time())
             agent.setLocked(True)
 
@@ -345,3 +373,7 @@ class upgrading:
 
         elif agent.getJob() in ("woodCutter", "miner"):
             agent.setState(locateMaterials())
+            agent.setLocked(False)
+
+    def getStateName(self):
+        return "upgrading"

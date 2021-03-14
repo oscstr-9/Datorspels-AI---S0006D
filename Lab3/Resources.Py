@@ -46,7 +46,7 @@ def treeFound(pos):
 # Checks if ores can be collected
 def gatherMinerals(agent):
     # If the world is out of ores, become woodcutter
-    if not mineralList:
+    if not mineralLeft:
         agent.setJob("woodCutter")
         return False
     # When agent stands on ore and is planning to pick it up, remove it from list and change texture

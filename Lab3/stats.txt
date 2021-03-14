@@ -15,7 +15,7 @@ artisanUpgradeTime:120
 
 #Buildings
 buildingWoodCost:10
-smelteryIronCost:3
+bsIronCost:3
 cfBuildTime:60
 smelteryBuildTime:120
 bsBuildTime:180
@@ -28,7 +28,7 @@ coalReturn:1
 
 #Iron
 ironOreCost:2
-ironCoalcost:3
+ironCoalCost:3
 ironReturn:1
 
 #Sword

@@ -25,8 +25,8 @@ def main():
     Resources.findMaterials()
     Pygame.init()
 
-    for j in range(50):
-        if j < 20:
+    for j in range(StatParser.statDict["workers"]):
+        if j < 30:
             Agents.addToJobList("woodCutter")
         elif j >= 30 and j < 40:
             Agents.addToJobList("miner")
@@ -36,16 +36,23 @@ def main():
             Agents.addToJobList("builder")
 
     for k in range(8):
-        if k <= 4:
+        if k < 6:
             base.addToBuildList(["coalFurnace", 0])
         else:
             base.addToBuildList(["smeltery", 0])
 
 
-    # TimeMultiplier.setTimeMultiplier(int(input("Set a time multiplier: ")))
-    TimeMultiplier.setTimeMultiplier(100)
 
-    updateGame()
+    TimeMultiplier.setTimeMultiplier(int(input("Set a time multiplier: ")))
+    debug = input("Debug info y/n?: ")
+    if debug == "y":
+        debug = True
+    else:
+        debug = False
+    gameStart = time.time()
+    if updateGame(debug):
+        print("Time to finish: " + str((time.time() - gameStart) * TimeMultiplier.timeMultiplier))
+        return True
 
 
 def setupStartPos(r):
@@ -76,13 +83,13 @@ def setupStartPos(r):
     return startPos
 
 
-def updateGame():
+def updateGame(debug):
     global base
-    worldTimer = time.time()
     while True:
+        Pygame.update()
         if Agents.jobList:
             for agent in agents:
-                if agent.getRole() == "worker" and Agents.jobList:
+                if agent.getRole() == "worker" and agent.getState() != "upgrading":
                     agent.setJob(Agents.jobList[0])
                     Agents.removeFromJobList()
                     agent.setState(StateManager.upgrading())
@@ -93,20 +100,69 @@ def updateGame():
             agent.state.execute(agent)
         FogOfWar.updateFogOfWar(agents)
         Pygame.drawAgents(agents)
-        Pygame.update()
-        # whenToDoWhat(worldTimer)
+        if agents[0].base.getCoal() >= 200 and agents[0].base.getIron() >= 20:
+            print("Victory!")
+            return True
+        if debug:
+            infoPrints()
 
 
 
-def whenToDoWhat(worldTimer):
-    if time.time() - worldTimer >= 10:
+on = True
+worldTimer = 3
+
+def infoPrints():
+    global on
+    global worldTimer
+    if not on:
         worldTimer = time.time()
+        on = True
+    if time.time() - worldTimer >= 3:
+        on = False
+        worldTimer = time.time()
+        print("Wood: " + str(agents[0].base.getWood()))
+        print("---------------------------------------------")
+        print("Ore: " + str(agents[0].base.getMinerals()))
+        print("---------------------------------------------")
         print("Coal: " + str(agents[0].base.getCoal()))
         print("---------------------------------------------")
         print("Iron: " + str(agents[0].base.getIron()))
+        print("---------------------------------------------")
 
-    if agents[0].base.getCoal() >= 200 and agents[0].base.getIron() >= 20:
-        print("Victory!")
-        return True
+        i = 0
+        j = 0
+        k = 0
+        l = 0
+        m = 0
+        n = 0
+        o = 0
+        for agent in agents:
+            if agent.getJob() == "woodCutter":
+                i += 1
+            elif agent.getJob() == "miner":
+                j += 1
+            elif agent.getRole() == "builder":
+                k += 1
+            elif agent.getRole() == "explorer":
+                l += 1
+            elif agent.getRole() == "smelteryWorker":
+                m += 1
+            elif agent.getRole() == "coalWorker":
+                n += 1
+            o += 1
+
+        print("woodCutter: " + str(i))
+        print("miner: " + str(j))
+        print("builders: " + str(k))
+        print("explorers: " + str(l))
+        print("smelteryWorkers: " + str(m))
+        print("coalWorkers: " + str(n))
+        print("Total amount of agents: " + str(o))
+        print("---------------------------------------------")
+
+        print(base.getBuildList())
+        print("---------------------------------------------")
+        print("\n")
+
 
 main()

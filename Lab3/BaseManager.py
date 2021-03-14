@@ -51,9 +51,11 @@ class base():
 
     def removeIronCost(self):
         self.minerals -= StatParser.statDict["ironOreCost"]
-        self.coal -= StatParser.statDict["ironCoalcost"]
+        self.coal -= StatParser.statDict["ironCoalCost"]
     def createIron(self):
         self.iron += StatParser.statDict["ironReturn"]
+    def getIron(self):
+        return self.iron
 
     def removeSwordCost(self):
         self.iron -= StatParser.statDict["swordIronCost"]
@@ -64,44 +66,38 @@ class base():
 
     def buildCoalFurnace(self, agent, pos):
         if self.wood < StatParser.statDict["buildingWoodCost"]:
-            return
+            return False
 
-        self.wood -= StatParser.statDict["buildingWoodCost"]
-        agent.base.popBuildList()
-
-        if agent.getJob()[0] != "coalFurnace" and agent.getJob()[0] != "coalFurnace*":
+        elif agent.getJob()[0] != "coalFurnace" or agent.getJob()[0] != "coalFurnace*":
+            self.wood -= StatParser.statDict["buildingWoodCost"]
+            agent.base.popBuildList()
             agent.setTimer(time.time())
-            agent.setJob(("coalFurnace", agent.getPos()))
-            agent.setLocked(True)
-            Map.changeMap("construction", agent.getPos())
+            agent.setJob(("coalFurnace", pos))
+            Map.changeMap("construction", pos)
             return True
 
     def buildSmeltery(self, agent, pos):
-        if self.wood < StatParser.statDict["buildingWoodCost"] or self.iron < StatParser.statDict["smelteryIronCost"]:
-            return
+        if self.wood < StatParser.statDict["buildingWoodCost"]:
+            return False
 
-        self.wood -= StatParser.statDict["buildingWoodCost"]
-        self.iron -= StatParser.statDict["smelteryIronCost"]
-        agent.base.popBuildList()
-
-        if agent.getJob()[0] != "smeltery" and agent.getJob()[0] != "smeltery*":
+        elif agent.getJob()[0] != "smeltery" or agent.getJob()[0] != "smeltery*":
+            self.wood -= StatParser.statDict["buildingWoodCost"]
+            agent.base.popBuildList()
             agent.setTimer(time.time())
             agent.setJob(("smeltery", pos))
-            agent.setLocked(True)
             Map.changeMap("construction", pos)
             return True
 
     def buildBlacksmith(self, agent, pos):
-        if self.wood < StatParser.statDict["buildingWoodCost"]:
-            return
+        if self.wood < StatParser.statDict["buildingWoodCost"] or StatParser.statDict["bsIronCost"]:
+            return False
 
-        self.wood -= StatParser.statDict["buildingWoodCost"]
-        agent.base.popBuildList()
-
-        if agent.getJob()[0] != "blacksmith" and agent.getJob()[0] != "blacksmith*":
+        if agent.getJob()[0] != "blacksmith" or agent.getJob()[0] != "blacksmith*":
+            self.wood -= StatParser.statDict["buildingWoodCost"]
+            self.iron -= StatParser.statDict["bsIronCost"]
+            agent.base.popBuildList()
             agent.setTimer(time.time())
             agent.setJob(("blacksmith", pos))
-            agent.setLocked(True)
             Map.changeMap("construction", pos)
             return True
 
@@ -115,7 +111,6 @@ class base():
         if agent.getJob()[0] != "trainingCamp":
             agent.setTimer(time.time())
             agent.setJob(("trainingCamp", pos))
-            agent.setLocked(True)
             Map.changeMap("construction", pos)
             return True
 
@@ -174,15 +169,9 @@ class smeltery:
         self.occupied = occupied
 
     def work(self, agent):
-        if not self.working and agent.base.getCoal() >= StatParser.statDict["ironCoalCost"] and agent.base.getMinerals() >= StatParser.statDict["ironOreCost"]:
+        if agent.base.getCoal() >= StatParser.statDict["ironCoalCost"] and agent.base.getMinerals() >= StatParser.statDict["ironOreCost"]:
             agent.base.removeIronCost()
-            self.timer = time.time()
-            self.working = True
-        elif self.working:
-            diff = (time.time() - self.timer) * TimeMultiplier.timeMultiplier
-            if diff >= StatParser.statDict["ironTimeCost"]:
-                agent.base.createIron()
-                self.working = False
+            agent.base.createIron()
 
 class blacksmith:
     def __init__(self, pos):

@@ -53,6 +53,7 @@ def drawMap():
     fogColor = (0, 43, 51)
     mapList = Map.map
     fogOfWar = FogOfWar.fogOfWar
+    # Draws each square on the map
     for x in range(len(mapList)):
         for y in range(len(mapList[0])):
             rect = pygame.Rect(x * gridSize, y * gridSize, gridSize, gridSize)
@@ -75,6 +76,7 @@ def drawAgents(agents):
         "smelteryWorker": (240, 170, 240),
         "soldier": (0, 190, 150)
     }
+    # Draws each agent
     for agent in agents:
         pos = agent.getPos()
         rect = pygame.Rect(pos[0] * gridSize + gridSize//2 - agentSize//2, pos[1] * gridSize + gridSize//2 - agentSize//2, agentSize, agentSize)
@@ -84,21 +86,26 @@ def drawAgents(agents):
 
 # updates the display and allows for ESC to quit
 def update():
-    # Has the ESCAPE key been pressed?
     for event in pygame.event.get():
+        # Has key been pressed?
         if event.type == KEYDOWN:
             global localTimeMultiplier
+            # Was it space bar?
             if event.key == K_SPACE:
                 if TimeMultiplier.timeMultiplier > 0:
+                    # Pause all timers
                     localTimeMultiplier = TimeMultiplier.timeMultiplier
                     TimeMultiplier.setTimeMultiplier(0)
                 else:
                     TimeMultiplier.setTimeMultiplier(localTimeMultiplier)
 
+            # Was it escape?
             if event.key == K_ESCAPE:
                 # Done! Time to quit.
                 pygame.quit()
                 return False
+
+    # Update the display and redraw map
     pygame.display.update()
     drawMap()
 

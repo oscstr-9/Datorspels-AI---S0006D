@@ -1,5 +1,6 @@
 statDict = {}
 
+# Reads all set values for agents, buildings, minerals and trees from stats file
 def readStats():
     f = open("stats.txt", "r")
     # parse map file

@@ -1,8 +1,9 @@
 import StatParser
 import random
 map = 0
-r = ([0, 0, 0], [1, 1, 0], [1, 0, 0], [0, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, 0, 0], [0, -1, 0], [-1, -1, 0])
+r = ((1, 1), (1, 0), (0, 1), (-1, 1), (1, -1), (-1, 0), (0, -1), (-1, -1))
 
+# Reads map from map file and make a 2D array where every index is a square on the map.
 def makeMap():
     global map
     f = open("Maps/Map.txt", "r")
@@ -23,6 +24,7 @@ def makeMap():
 
     generateMinerals(map)
 
+# Generates minerals in random positions on the map
 def generateMinerals(map):
     pos = [random.randrange(1, 99), random.randrange(1, 99)]
     for i in range(StatParser.statDict["ores"]):
@@ -34,6 +36,7 @@ def generateMinerals(map):
                 pos = [random.randrange(1, 99), random.randrange(1, 99)]
                 break
 
+# Changes value of square on the map if something has changed, e.g. mineral was picked up or building was built.
 def changeMap(change, pos):
     global map
     map[pos[0]][pos[1]] = change

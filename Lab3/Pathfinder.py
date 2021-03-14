@@ -2,6 +2,7 @@ import Map
 import FogOfWar
 import Agents
 
+# Slightly modified heuristic function to fit the goal of the AI.
 def heuristic(neighbour, finish, g, r):
     multiplier = 1
     if r[0] == 0 or r[1] == 0:
@@ -9,6 +10,7 @@ def heuristic(neighbour, finish, g, r):
     else:
         neighbour.append(g+1.4)
 
+    # If ground is slow to walk on, prioritize it less.
     if Map.map[neighbour[0]][neighbour[1]] in ("G", "t"):
         multiplier = 2
     else:
@@ -25,6 +27,7 @@ def heuristic(neighbour, finish, g, r):
 
     return neighbour
 
+# Checks if current neighbour is better than what is currently in the open list and then adds it.
 def addToOpen(openList, closedList, neighbour):
     for node in openList:
         if neighbour[0] == node[0] and neighbour[1] == node[1]:
@@ -43,6 +46,7 @@ def addToOpen(openList, closedList, neighbour):
             return
     openList.append(neighbour)
 
+# A* pathfinding algorithm, look it up if you need more info...
 def aStar(startPos, finishPos, r, agent):
     nonExplorer = False
     mapList = Map.map
@@ -56,14 +60,14 @@ def aStar(startPos, finishPos, r, agent):
     openList.append(start)
 
     if agent.getRole() != "explorer":
-        # also exclude fogOfWar
+        # Also exclude fogOfWar
         nonExplorer = True
 
     while len(openList) > 0:
-        #sort list
+        #Sort list
         openList.sort(key=lambda x: x[5])
 
-        #pop lowest cost
+        #Pop lowest cost
         currentPos = openList.pop(0)
         nodes.append(currentPos)
         closedList.append(currentPos)
@@ -76,6 +80,7 @@ def aStar(startPos, finishPos, r, agent):
             return path[::-1]
 
         for next in r:
+            # Checks if agent can walk here or not
             if nonExplorer and not FogOfWar.fogOfWar[next[0] + currentPos[0]][next[1] + currentPos[1]]:
                 continue
 
@@ -105,6 +110,7 @@ def aStar(startPos, finishPos, r, agent):
             addToOpen(openList, closedList, neighbour)
         i += 1
 
+# Runs a* and returns path
 def findPath(agent, finish):
     start = agent.getPos()
     path = aStar(start, finish, Map.r, agent)

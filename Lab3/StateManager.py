@@ -1,3 +1,5 @@
+# The state manager file contains all the possible states that an agent can have.
+
 import Agents
 import Pathfinder
 import Map
@@ -9,6 +11,8 @@ import StatParser
 import time
 import random
 
+# The explore state is for explorers and allow them to traverse the map
+# and focus on finding trees and undiscovered areas.
 class explore:
     def execute(self, agent):
         map = Map.map
@@ -28,7 +32,7 @@ class explore:
             # Set/declare variables
             fogOfWar = FogOfWar.fogOfWar
             fogOfWarList = FogOfWar.fogOfWarList
-            r =  Map.r
+            r = Map.r
             path = agent.getPath()
             woodsFound = False
             WoodsPos = (0, 0)
@@ -61,14 +65,17 @@ class explore:
     def getStateName(self):
         return "explore"
 
+# The locate minerals state is for workers and make them find the materials associated with their job.
 class locateMaterials:
     def execute(self, agent):
+        # Checks what the agent should collect
         if agent.getJob() == "woodCutter":
             self.findWood(agent)
 
         elif agent.getJob() == "miner":
             self.findMinerals(agent)
 
+    # Tells wood cutters to find wood
     def findWood(self, agent):
         woodPrioList = []
         pos = agent.base.getPos()
@@ -77,8 +84,6 @@ class locateMaterials:
             if FogOfWar.fogOfWar[tree[0]][tree[1]]:
                 woodPrioList.append((tree[0], tree[1], abs(tree[0] - pos[0]) + abs(tree[1] - pos[1])))
         woodPrioList.sort(key=lambda x: x[2])
-        print (woodPrioList)
-
 
         # If agent has no path, go to closest found tree
         if not agent.getPath() and woodPrioList:
@@ -92,7 +97,7 @@ class locateMaterials:
                 agent.setTimer(time.time())
                 agent.setState(woodCutting())
 
-
+    # Tells miner to find minerals
     def findMinerals(self, agent):
         mineralPrioList = []
         pos = agent.getPos()
@@ -118,6 +123,7 @@ class locateMaterials:
     def getStateName(self):
         return "locateMaterials"
 
+    # Lets the agent move a square in direction of its path
     def move(self, agent, pos):
         diff = (time.time() - agent.getTimer()) * TimeMultiplier.timeMultiplier
         if Map.map[pos[0]][pos[1]] in ("G", "T", "t"):
@@ -130,7 +136,8 @@ class locateMaterials:
             agent.setPos(agent.getPath()[0])
             agent.setPath(agent.popPath())
 
-
+# The woodCutting state tells the agent to stand still for 30 seconds in order
+# to receive wood, then return home
 class woodCutting():
     def execute(self, agent):
         diff = (time.time() - agent.getTimer()) * TimeMultiplier.timeMultiplier
@@ -144,7 +151,7 @@ class woodCutting():
     def getStateName(self):
         return "woodCutting"
 
-
+# The returnHome state tells the agent to return back to the base position and empty their inventory.
 class returnHome():
     def execute(self, agent):
         pos = agent.getPos()
@@ -181,6 +188,8 @@ class returnHome():
     def getStateName(self):
         return "returnHome"
 
+# The findWorkStation state tells the agent to look for an empty work station that fits
+# its job, go there and start working.
 class findWorkStation:
     def execute(self, agent):
         if not agent.getPath():
@@ -214,7 +223,9 @@ class findWorkStation:
     def getStateName(self):
         return "findWorkStation"
 
-
+# The work state simply tells the agent to call its workstations work function.
+# If the agent is a smeltery worker, stop producing iron when they reach 20
+# since that is all that is needed to reach the goal.
 class work:
     def execute(self, agent):
         if agent.base.getBuildList() == []:
@@ -225,6 +236,10 @@ class work:
     def getStateName(self):
         return "work"
 
+# The build state tells the builder what to build, where to build it
+# and when to hire someone to work at the workstation once it has been built.
+# It gives the builders a job with the same name as the work station they are building,
+# if they have a * after it, then they have also posted a job for  that building.
 class build:
     def execute(self, agent):
         readyToBuild = False
@@ -325,7 +340,8 @@ class build:
     def getStateName(self):
         return "build"
 
-
+# The idle state is for those agents that have nothing to do.
+# If the agent is a builder, check the build list and get back to work if needed.
 class idle:
     def execute(self, agent):
         if agent.getRole() == "builder" and agent.base.getBuildList() != []:
@@ -337,6 +353,7 @@ class idle:
         return "idle"
 
 
+# The upgrading state is for when a agent is upgrading from a worker to something else, like a builder or an explorer.
 class upgrading:
     def execute(self, agent):
         if not agent.getLocked():

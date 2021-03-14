@@ -2,6 +2,8 @@ import StateManager
 import time
 jobList = []
 
+# The agent class has all information about the agents.
+# It also has getters and setters for almost all variables
 class agent:
     def __init__(self, pos, base, id):
         self.x = pos[0]
@@ -63,6 +65,8 @@ class agent:
         return self.job
     def setJob(self, job):
         self.job = job
+
+# Adds and removes jobs from the job list that all agents share
 def addToJobList(job):
     global jobList
     jobList.append(job)

@@ -14,6 +14,7 @@ import time
 agents = []
 base = 0
 
+# The main function. Initialises useful functions and adds important data to some arrays so the AI knows what to do.
 def main():
     global base
     r = ([0, 0, 0], [1, 1, 0], [1, 0, 0], [0, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, 0, 0], [0, -1, 0], [-1, -1, 0])
@@ -25,6 +26,7 @@ def main():
     Resources.findMaterials()
     Pygame.init()
 
+    # Adds jobs to the job list for workers to be assigned to.
     for j in range(StatParser.statDict["workers"]):
         if j < 30:
             Agents.addToJobList("woodCutter")
@@ -35,6 +37,7 @@ def main():
         else:
             Agents.addToJobList("builder")
 
+    # Adds some buildings to the build list so the builders know what to build.
     for k in range(8):
         if k < 6:
             base.addToBuildList(["coalFurnace", 0])
@@ -42,24 +45,30 @@ def main():
             base.addToBuildList(["smeltery", 0])
 
 
-
+    # Allows user to speed up the application (can be laggy).
     TimeMultiplier.setTimeMultiplier(int(input("Set a time multiplier: ")))
+    # Allows the user to choose if they want debug info to be displayed or not
     debug = input("Debug info y/n?: ")
     if debug == "y":
         debug = True
     else:
         debug = False
+
+    # Runs and times update to see how long it took for the AI to complete the wanted task
     gameStart = time.time()
     if updateGame(debug):
         print("Time to finish: " + str((time.time() - gameStart) * TimeMultiplier.timeMultiplier))
         return True
 
-
+# Gets a random position on the map and checks if it's possible to spawn there.
+# Spawns workers around spawning area and sets base position to spawn position.
 def setupStartPos(r):
     global base
     map = Map.map
     R = copy.deepcopy(r)
     redo = True
+
+    # Finds suitable spawning area
     while redo:
         startPos = (random.randrange(1, 99), random.randrange(1, 99))
         for neighbour in R:
@@ -72,6 +81,7 @@ def setupStartPos(r):
     map[startPos[0]][startPos[1]] = "S"
     base = BaseManager.base(startPos)
 
+    # Spawn workers around spawning area
     for i in range(StatParser.statDict["workers"]):
         for next in R:
             if next[2] == 7:
@@ -82,11 +92,14 @@ def setupStartPos(r):
 
     return startPos
 
-
+# Keeps the application updated by running pygame and checking triggers like
+# jobs being available and if victory requirements have been met.
 def updateGame(debug):
     global base
     while True:
         Pygame.update()
+
+        # Checks job list for available jobs and assigns them to workers.
         if Agents.jobList:
             for agent in agents:
                 if agent.getRole() == "worker" and agent.getState() != "upgrading":
@@ -96,10 +109,14 @@ def updateGame(debug):
                     if not Agents.jobList:
                         break
 
+        # Executes the agents current state
         for agent in agents:
             agent.state.execute(agent)
+
         FogOfWar.updateFogOfWar(agents)
         Pygame.drawAgents(agents)
+
+        # Checks if victory requirements have been met.
         if agents[0].base.getCoal() >= 200 and agents[0].base.getIron() >= 20:
             print("Victory!")
             return True
@@ -111,9 +128,11 @@ def updateGame(debug):
 on = True
 worldTimer = 3
 
+# Prints useful information for debugging on a 3 second timer.
 def infoPrints():
     global on
     global worldTimer
+
     if not on:
         worldTimer = time.time()
         on = True
@@ -159,7 +178,6 @@ def infoPrints():
         print("coalWorkers: " + str(n))
         print("Total amount of agents: " + str(o))
         print("---------------------------------------------")
-
         print(base.getBuildList())
         print("---------------------------------------------")
         print("\n")

@@ -5,6 +5,8 @@ import Map
 import StatParser
 import time
 
+# The base class contains all information going on with the base such as:
+# materials, buildings and starting position.
 class base():
     def __init__(self, pos):
         self.pos = pos
@@ -115,6 +117,8 @@ class base():
             return True
 
 
+# coalFurnace class contains all information about a coal furnace
+# as well as the work function that allows it to produce coal.
 class coalFurnace:
     def __init__(self, pos):
         self.name = "coalFurnace"
@@ -135,6 +139,7 @@ class coalFurnace:
     def setOccupied(self, occupied):
         self.occupied = occupied
 
+    # Checks if base has enough materials to create coal. If true, set timer, then create coal.
     def work(self, agent):
         if not self.working and agent.base.getWood() >= StatParser.statDict["coalWoodCost"]:
             agent.base.removeCoalCost()
@@ -146,8 +151,8 @@ class coalFurnace:
                 agent.base.createCoal()
                 self.working = False
 
-
-
+# smeltery class contains all information about a smeltery
+# as well as the work function that allows it to produce iron.
 class smeltery:
     def __init__(self, pos):
         self.name = "smeltery"
@@ -168,11 +173,15 @@ class smeltery:
     def setOccupied(self, occupied):
         self.occupied = occupied
 
+    # Checks if base has enough materials to create iron. If true create ion.
     def work(self, agent):
         if agent.base.getCoal() >= StatParser.statDict["ironCoalCost"] and agent.base.getMinerals() >= StatParser.statDict["ironOreCost"]:
             agent.base.removeIronCost()
             agent.base.createIron()
 
+
+# blacksmith class contains all information about a blacksmith
+# as well as the work function that allows it to produce swords.
 class blacksmith:
     def __init__(self, pos):
         self.name = "blacksmith"
@@ -193,6 +202,7 @@ class blacksmith:
     def setOccupied(self, occupied):
         self.occupied = occupied
 
+    # Checks if base has enough materials to create swords. If true, set timer, then create swords.
     def work(self, agent):
         if not self.working and agent.base.getCoal() >= StatParser.statDict["swordCoalCost"] and agent.base.getIron() >= StatParser.statDict["swordIronCost"]:
             agent.base.removeSwordCost()
@@ -203,6 +213,7 @@ class blacksmith:
             if diff >= StatParser.statDict["swordTimeCost"]:
                 agent.base.createSword()
                 self.working = False
+
 
 class trainingCamp:
     def __init__(self, pos):
